@@ -20,7 +20,7 @@ io.on("connection", (socket) => {
   let addedUser = false
 
   socket.on("load user", () => {
-    socket.emit("load user", numUsers)
+    io.emit("load user", numUsers)
   })
 
   socket.on("disconnect", () => {
@@ -30,9 +30,10 @@ io.on("connection", (socket) => {
   // when the client emits 'new message', this listens and executes
   socket.on("new message", (data) => {
     // we tell the client to execute 'new message'
-    socket.emit("new message", {
+    io.emit("new message", {
       username: socket.username,
-      message: data,
+      message: data.body,
+      senderId: data.senderId,
     })
   })
 
@@ -47,7 +48,7 @@ io.on("connection", (socket) => {
       numUsers: numUsers,
     })
     // echo globally (all clients) that a person has connected
-    socket.emit("user joined", {
+    io.emit("user joined", {
       username: socket.username,
       numUsers: numUsers,
     })
@@ -57,7 +58,7 @@ io.on("connection", (socket) => {
     if (addedUser) {
       --numUsers
 
-      socket.emit("user left", {
+      io.emit("user left", {
         username: socket.username,
         numUsers: numUsers,
       })

@@ -1,8 +1,7 @@
 <template>
-  <div>
-    number user {{ numberOfUser }}
-    <div v-if="!connected">
-      <div>
+  <div class="wrapper">
+    <div>
+      <div v-if="!connected">
         <h3 class="title">What's your nickname?</h3>
         <input class="usernameInput" type="text" maxlength="14" v-model="username" />
 
@@ -10,9 +9,21 @@
       </div>
     </div>
 
-    <div v-if="connected">
-      <input type="text" v-model="msg" />
-      <button @click="onSendMsg()">Send</button>
+    <div class="outer_form" v-if="connected">
+      <div class="inner_form">
+        <div v-for="(msg, index) in messages" :key="index">
+          <ChatMessage :type="msg.senderId === socketId ? 'out' : 'in'" :username="msg.username">{{ msg.message }} </ChatMessage>
+        </div>
+      </div>
+
+      <div class="box_chat">
+        <div class="chat">
+          <input class="chat_input" type="text" v-model="msg" />
+        </div>
+        <div>
+          <button @click="onSendMsg()">Send</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -20,6 +31,8 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import { socket, state } from "../socket"
+import ChatMessage from "./ChatMessage.vue"
+import { v4 as uuidv4 } from "uuid"
 
 const username = ref("")
 const msg = ref("")
@@ -27,13 +40,23 @@ let message = ref("")
 
 const connected = ref(false)
 const numberOfUser = ref(0)
+const socketId = ref(uuidv4())
+
+const messages = ref([])
 
 function onSetUsername() {
+  if (!username) {
+    return
+  }
   socket.emit("add user", username.value)
 }
 
 function onSendMsg() {
-  socket.emit("new message", msg.value)
+  socket.emit("new message", {
+    body: msg.value,
+    senderId: socketId.value,
+  })
+  msg.value = ""
 }
 
 const addParticipantsMessage = (data) => {
@@ -47,33 +70,22 @@ const addParticipantsMessage = (data) => {
 }
 
 onMounted(() => {
-  // Whenever the server emits 'user joined', log it in the chat body
-
   socket.emit("load user")
 
   socket.on("load user", (num) => {
     numberOfUser.value = num
   })
 
-  socket.on("user joined", (data) => {
-    console.log(data)
-    addParticipantsMessage(data)
-  })
-
-  // Whenever the server emits 'user left', log it in the chat body
   socket.on("user left", (data) => {
     addParticipantsMessage(data)
   })
 
-  socket.on("new message", (data) => {
-    addChatMessage(data)
-  })
-
-  // Whenever the server emits 'login', log the login message
   socket.on("login", (data) => {
     connected.value = true
-    // Display the welcome message
-    const message = "Welcome to Socket.IO Chat – "
+  })
+
+  socket.on("new message", (newMsg) => {
+    messages.value.push(newMsg)
   })
 
   socket.on("disconnect", () => {
@@ -82,4 +94,49 @@ onMounted(() => {
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+.wrapper {
+  position: relative;
+  width: 100%;
+  padding: 12px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.outer_form {
+  padding: 12px;
+  border: 1px solid blue;
+  width: 100%;
+}
+
+.inner_form {
+  border: 1px solid blue;
+  width: 100%;
+  min-height: 250px;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.box_chat {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.chat {
+  flex: 1;
+  height: 100%;
+  margin-top: 12px;
+}
+
+.chat_input {
+  width: 100%;
+  height: 30px;
+
+  border: 1px solid blue;
+}
+
+.box_chat button {
+  margin-top: 10px;
+}
+</style>

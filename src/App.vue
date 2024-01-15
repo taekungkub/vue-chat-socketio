@@ -1,6 +1,8 @@
 <template>
   <!-- <Chat /> -->
-  <Chat2 />
+  <LayoutChat2>
+    <Chat2 />
+  </LayoutChat2>
 </template>
 
 <script setup>
@@ -9,21 +11,9 @@ import { ref, onMounted } from "vue"
 
 import { socket } from "./socket"
 import Chat2 from "./components/Chat2.vue"
+import LayoutChat2 from "./components/LayoutChat2.vue"
 
 socket.connect()
 </script>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+<style scoped></style>
